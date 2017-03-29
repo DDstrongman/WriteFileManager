@@ -1,0 +1,12 @@
+use_frameworks!
+
+target 'WriteFileSupportSpec_Example' do
+  pod 'WriteFileSupportSpec', :path => '../'
+
+  target 'WriteFileSupportSpec_Tests' do
+    inherit! :search_paths
+
+    pod 'Kiwi'
+  pod 'FBSnapshotTestCase'
+  end
+end
