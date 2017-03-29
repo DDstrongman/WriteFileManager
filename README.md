@@ -17,12 +17,12 @@ WriteFileSupportSpec is available through [CocoaPods](http://cocoapods.org). To 
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod "WriteFileSupportSpec"
+pod "DDWriteFileManager"
 ```
 
 ## Author
 
-DDStrongman, lishengshu@xinxindai.com
+DDStrongman, lishengshu232@gmail.com
 
 ## License
 
