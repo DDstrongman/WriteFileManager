@@ -77,7 +77,7 @@
     if (res) {
         
     }else {
-        DDLog(@"文件创建失败");
+        
     }
     return [testPath stringByAppendingFormat:@"/%@.png",FileName];
 }
@@ -92,7 +92,7 @@
     if (res) {
         
     }else {
-        DDLog(@"文件创建失败");
+        
     }
     return [testPath stringByAppendingFormat:@"/%@.jpg",FileName];
 }
@@ -208,7 +208,6 @@
     //[NSHomeDirectory() stringByAppendingPathComponent:@"Library"];
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
     NSString *libraryDirectory = [paths objectAtIndex:0];
-    DDLog(@"app_home_lib: %@",libraryDirectory);
 }
 
 ///获取Cache目录
@@ -222,7 +221,6 @@
 - (NSString *)getDirCache {
     NSArray *cacPath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *cachePath = [cacPath objectAtIndex:0];
-    DDLog(@"app_home_lib_cache: %@",cachePath);
     return cachePath;
 }
 
@@ -230,7 +228,6 @@
 - (void)dirTmp {
     //[NSHomeDirectory() stringByAppendingPathComponent:@"tmp"];
     NSString *tmpDirectory = NSTemporaryDirectory();
-    DDLog(@"app_home_tmp: %@",tmpDirectory);
 }
 
 ///创建文件夹
@@ -244,7 +241,7 @@
         
     }
     else {
-        DDLog(@"文件夹创建失败");
+        
     }
 }
 
@@ -269,7 +266,7 @@
         
     }
     else {
-        DDLog(@"数组写入失败");
+        
     }
     return testPath;
 }
@@ -295,7 +292,7 @@
         
     }
     else{
-        DDLog(@"字典写入失败");
+        
     }
     return testPath;
 }
@@ -319,7 +316,7 @@
         
     }
     else{
-        DDLog(@"data写入失败");
+        
     }
     return testPath;
 }
@@ -338,7 +335,7 @@
         
     }
     else{
-        DDLog(@"data写入失败");
+        
     }
     return res;
 }
