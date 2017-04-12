@@ -1,5 +1,5 @@
 //
-//  WriteFileSupport.h
+//  DDWriteFileSupport.h
 //  ResultContained
 //
 //  Created by 李胜书 on 15/8/17.
@@ -8,11 +8,11 @@
 
 #import <Foundation/Foundation.h>
 
-@interface WriteFileSupport : NSObject
+@interface DDWriteFileSupport : NSObject
 
 @property (nonatomic,strong) NSCache *FileCache;
 
-+ (WriteFileSupport *)ShareInstance;
++ (DDWriteFileSupport *)ShareInstance;
 
 /**
  存储data流到本地，主要是用来写图片，存于documents路径下，但是不会主动创建文件夹

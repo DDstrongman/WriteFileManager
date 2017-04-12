@@ -1,5 +1,5 @@
 //
-//  WriteFileSupport.m
+//  DDWriteFileSupport.m
 //  ResultContained
 //
 //  Created by 李胜书 on 15/8/17.
@@ -14,12 +14,12 @@
  */
 
 
-#import "WriteFileSupport.h"
+#import "DDWriteFileSupport.h"
 
-@implementation WriteFileSupport
+@implementation DDWriteFileSupport
 
-+ (WriteFileSupport *) ShareInstance {
-    static WriteFileSupport *sharedWriteFileInstance = nil;
++ (DDWriteFileSupport *) ShareInstance {
+    static DDWriteFileSupport *sharedWriteFileInstance = nil;
     static dispatch_once_t predicate;
     dispatch_once(&predicate, ^{
         sharedWriteFileInstance = [[self alloc] init];
