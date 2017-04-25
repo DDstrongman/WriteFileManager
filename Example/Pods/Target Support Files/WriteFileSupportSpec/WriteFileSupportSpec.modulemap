@@ -1,6 +1,0 @@
-framework module WriteFileSupportSpec {
-  umbrella header "WriteFileSupportSpec-umbrella.h"
-
-  export *
-  module * { export * }
-}

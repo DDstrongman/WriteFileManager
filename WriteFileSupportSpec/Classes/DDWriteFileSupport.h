@@ -141,4 +141,9 @@
 ///无缓存获取图片
 - (UIImage *)readImgNotCache:(NSString *)fileName;
 
+/// 整个Caches文件夹大小
+- (float)tt_cachesFolderSize;
+/// 删除整个Caches
+- (void)tt_cleanCaches;
+
 @end
