@@ -6,144 +6,244 @@
 //  Copyright (c) 2015年 李胜书. All rights reserved.
 //
 
+typedef enum {
+    ///在documents下
+    Documents = 0,
+    ///在library/caches下
+    LibraryCaches,
+    ///在temp下
+    Temp
+}DDFileField;
+typedef enum {
+    ///需要返回image
+    Image = 0,
+    ///需要返回数组
+    Array,
+    ///需要返回字典
+    Dictionary,
+    ///需要返回文件流
+    Data
+}DDFileType;
+typedef enum {
+    ///需要返回kb大小
+    KB = 0,
+    ///需要返回mb大小
+    MB,
+    ///需要返回gb大小
+    GB,
+    ///需要返回tb大小
+    TB
+}DDSizeType;
+typedef enum {
+    ///图片为PNG
+    PNG = 0,
+    ///图片为JPEG
+    JPEG
+}DDImgType;
+
 #import <Foundation/Foundation.h>
 
 @interface DDWriteFileSupport : NSObject
 
-@property (nonatomic,strong) NSCache *FileCache;
-
-+ (DDWriteFileSupport *)ShareInstance;
-
 /**
- 存储data流到本地，主要是用来写图片，存于documents路径下，但是不会主动创建文件夹
+ 单实例化
  
- @param FileName 存储文件名
+ @return 返回生成的单实例
+ */
++ (DDWriteFileSupport *)ShareInstance;
+#pragma mark - 写入
+/**
+ 直接存储data流到本地，绝对路径为path，不管路径上是否已存在文件
+ 
+ @param path 文件路径，需要为绝对路径
+ @param data 二进制流，数组或字典，图片，图片默认为png格式，如果需要写jpg图片请使用选择图片type的方法
+ @return 返回写入结果
+ */
+- (BOOL)directWriteFile:(NSString *)path
+                   Data:(id)data;
+/**
+ 直接存储图片到本地，绝对路径为path，不管路径上是否已存在文件
+ 
+ @param path 图片路径，需要为绝对路径
+ @param data 图片
+ @param imgType 图片类型
+ @return 返回写入结果
+ */
+- (BOOL)directWriteFile:(NSString *)path
+                   Data:(UIImage *)data
+              ImageType:(DDImgType)imgType;
+/**
+ 存储data流到本地，绝对路径为path，路径上如果已存在文件则返回失败
+ 
+ @param path 文件路径，需要为绝对路径
+ @param data 二进制流，数组或字典，图片，图片默认为png格式，如果需要写jpg图片请使用选择图片type的方法
+ @return 返回写入结果
+ */
+- (BOOL)writeFile:(NSString *)path
+             Data:(id)data;
+/**
+ 存储图片到本地，绝对路径为path，路径上如果已存在文件则返回失败
+ 
+ @param path 文件路径，需要为绝对路径
+ @param data 图片
+ @param imgType 图片类型
+ @return 返回写入结果
+ */
+- (BOOL)writeFile:(NSString *)path
+             Data:(id)data
+        ImageType:(DDImgType)imgType;
+/**
+ 直接存储data流到本地，相对路径为path，不管路径上是否已存在文件，可通过参数选择三处位置
+ 
+ @param path 文件相对路径，如果直接给文件名则直接写
+ @param data 二进制流，数组或字典，图片，图片默认为png格式，如果需要写jpg图片请使用选择图片type的方法
+ @param field 选择type
+ @return 返回写入结果
+ */
+- (BOOL)directWriteFileType:(NSString *)path
+                       Data:(id)data
+                      Field:(DDFileField)field;
+/**
+ 直接存储图片到本地，相对路径为path，不管路径上是否已存在文件，可通过参数选择三处位置
+ 
+ @param path 文件相对路径，如果直接给文件名则直接写
+ @param data 图片
+ @param imgType 图片类型
+ @param field 选择type
+ @return 返回写入结果
+ */
+- (BOOL)directWriteFileType:(NSString *)path
+                       Data:(id)data
+                  ImageType:(DDImgType)imgType
+                      Field:(DDFileField)field;
+/**
+ 存储data流到本地，相对路径为path，路径上已存在文件则返回失败，可通过参数选择三处位置
+ 
+ @param path 文件相对路径，如果直接给文件名则直接写
+ @param data 二进制流，数组或字典
+ @param field 选择type
+ @return 返回写入结果
+ */
+- (BOOL)writeFileType:(NSString *)path
+                 Data:(id)data
+                Field:(DDFileField)field;
+/**
+ 存储图片到本地，相对路径为path，路径上已存在文件则返回失败，可通过参数选择三处位置
+ 
+ @param path 文件相对路径，如果直接给文件名则直接写
+ @param data 图片
+ @param imgType 图片类型
+ @param field 选择type
+ @return 返回写入结果
+ */
+- (BOOL)writeFileType:(NSString *)path
+                 Data:(id)data
+            ImageType:(DDImgType)imgType
+                Field:(DDFileField)field;
+/**
+ 根据filed参数创建文件夹
+ 
  @param dirName 文件夹名
- @param pictureData 二进制流
- @return 返回的存储路径
+ @param field 选择的field地址
+ @return 返回创建结果
  */
-- (NSString *)createFile:(NSString *)FileName DirName:(NSString *)dirName PictureData:(NSData *)pictureData;
+- (BOOL)createDir:(NSString *)dirName
+            Filed:(DDFileField)field;
+#pragma mark - 删除
 /**
- 写图片并存在documents路径下，返回文件路径
-
- @param Dirname 文件夹名称
- @param fileName 文件名
- @param contents 要写的图片文件
- @return 返回的文件路径
+ 以绝对路径删除单个文件，如果不存在文件也返回NO
+ 
+ @param filePath 文件路径，绝对路径
+ @return 删除结果
  */
-- (NSString *)writeFileAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(UIImage *)contents;
-
+- (BOOL)removeFile:(NSString *)filePath;
 /**
- 写documents下的三层文件夹下的图片
-
- @param firstDir documents下的第一层
- @param secondDir documents下的第二层
- @param thirdDir documents下的第三层
- @param fileName 写的文件名
- @param contents 写的图片
- @return 返回写的路径
+ 以绝对路径删除文件夹下所有子文件或文件夹，如果不存在文件夹也返回NO
+ 
+ @param dirPath 文件夹路径，绝对路径
+ @return 删除结果
  */
-- (NSString *)writeCacheReturn:(NSString *)firstDir SecondDir:(NSString *)secondDir ThirdDir:(NSString *)thirdDir FileName:(NSString *)fileName Contents:(UIImage *)contents;
-
+- (BOOL)removeDirFiles:(NSString *)dirPath;
+#pragma mark - 读取文件夹下子文件路径或文件名
 /**
- 存储data流到本地，主要是用来写图片，存于documents路径下，会主动创建文件夹
-
- @param Dirname 文件夹名
- @param fileName 文件名
- @param contents 二进制流
- @return 返回文件路径
+ 返回给定文件夹路径下所有文件或文件夹路径
+ 
+ @param dirPath 给定的文件夹绝对路径
+ @return 返回的文件列表数组，数组元素为子文件或子文件夹的绝对路径
  */
-- (NSString *)writeImageAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(NSData *)contents;
-
-
-///获取documents路径
-- (NSString *)dirDoc;
-///获取Cache目录x
-- (NSString *)dirCache;
+- (NSMutableArray *)readDirPath:(NSString *)dirPath;
 /**
- 创建文件夹
-
- @param DirName 文件夹名
- */
-- (void)createDir:(NSString *)DirName;
-/**
- 删除文件
-
- @param filePath 文件路径，完全路径，没有帮拼接
- */
-- (void)removePicture:(NSString *)filePath;
-/**
- 读取文件夹下所有图片,没有帮拼接，文件夹的完整路径
-
- @param filePath 文件夹的完整路径
- @return 返回文件的数组
- */
-- (NSMutableArray *)readPicture:(NSString *)filePath;
-
-/**
- 读取文件夹下所有文件名。可以读取文件夹名，
-
+ 读取文件夹下所有文件名。包含文件夹名，
+ 
  @param dirPath 要读取的文件夹名称
- @return 返回的数组
+ @return 返回的文件列表数组，数组元素为自文件或自文件夹的名字
  */
 - (NSArray *)readDirNames:(NSString *)dirPath;
-
-///读取图片
-- (UIImage *)getLocalMark:(NSString *)filePath;
-///删除documents下所有文件
-- (void)removeAllDirDocuments;
-///获取cache下所有文件的大小
-- (float)countAllDirCaches;
-///获取documents下所有文件的大小
-- (float)countAllDirDocuments;
-///获取documents下单个文件夹的大小，用来建议用户是否删除缓存
-- (float)countSingleDirDocuments:(NSString *)fileName;
-///获取documents下单个文件的大小，用来建议用户是否删除缓存
-- (float)countSingleDirFile:(NSString *)fileName;
-///写数组保存
-- (NSString *)writeArray:(NSArray *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName;
-///写字典保存
-- (NSString *)writeDictionary:(NSDictionary *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName;
-///写二进制文件保存
-- (NSString *)writeData:(NSData *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName;
-///写二进制文件保存,直接写在dir下
-- (BOOL)writeData:(NSData *)contents FileName:(NSString *)fileName;
-
+#pragma mark - 读取文件操作
 /**
- 直接通过完整路径获取image，增加了缓存机制
-
- @param filePath 文件路径
- @return 返回图片   
+ 读取绝对路径下的文件，不存在则返回NO，可选择直接返回的type,如果缓存中存在则直接返回不需要设置返回type
+ 
+ @param filePath 文件绝对路径
+ @param type 返回文件类型
+ @return 返回文件
  */
-- (UIImage *)readImg:(NSString *)filePath;
-///文件是否存在
-- (BOOL)isFileExist:(NSString *)fileName;
-///读取数组
-- (NSMutableArray *)readArray:(NSString *)dirName FileName:(NSString *)fileName;
-///读取字典
-- (NSMutableDictionary *)readDictionary:(NSString *)dirName FileName:(NSString *)fileName;
-///读取data
-- (NSData *)readData:(NSString *)dirName FileName:(NSString *)fileName;
+- (id)readFile:(NSString *)filePath
+      FileType:(DDFileType)type;
 /**
-清除所有Cache缓存文件,目前是清除sdwebimage的图片缓存
+ 读取filed相对路径下的文件，不存在则返回NO，可选择直接返回的type,如果缓存中存在则直接返回不需要设置返回type
+ 
+ @param filePath 文件相对路径
+ @param type 返回文件类型
+ @param field 相对文件选址
+ @return 返回文件
  */
-- (void)removeAllCache;
-- (void)removeCache:(NSString *)fileName;
-///删除documents下文件，用以重置本地缓存
-- (void)removeFile:(NSString *)fileName;
-- (void)removeDirFile:(NSString *)dirName FileName:(NSString *)fileName;
-///刷新nscache
+- (id)readFile:(NSString *)filePath
+      FileType:(DDFileType)type
+     FileField:(DDFileField)field;
+/**
+ 删除nscache内的缓存
+ */
 - (void)flushCache;
+#pragma mark - 计算文件或文件夹大小操作
 /**
- *  清除Cache缓存文件
+ 通过绝对路径获取文件大小
+ 
+ @param filePath 文件绝对路径
+ @param type 返回文件大小的计算格式，kb,mb,gb,tb
+ @return 返回文件大小
  */
-- (void)removeCacheUnderCache:(NSString *)fileName;
-///无缓存获取图片
-- (UIImage *)readImgNotCache:(NSString *)fileName;
-
-/// 整个Caches文件夹大小
-- (float)tt_cachesFolderSize;
-/// 删除整个Caches
-- (void)tt_cleanCaches;
+- (float)countFileSize:(NSString *)filePath
+          FileSizeType:(DDSizeType)type;
+/**
+ 通过相对路径获取文件大小
+ 
+ @param filePath 文件相对路径
+ @param field 文件选址
+ @param type 返回文件大小的计算格式，kb,mb,gb,tb
+ @return 返回文件大小
+ */
+- (float)countFileSize:(NSString *)filePath
+                 Field:(DDFileField)field
+          FileSizeType:(DDSizeType)type;
+/**
+ 通过绝对路径获取文件夹大小
+ 
+ @param dirPath 文件夹绝对路径
+ @param type 返回文件大小的计算格式，kb,mb,gb,tb
+ @return 返回文件夹大小
+ */
+- (float)countDirSize:(NSString *)dirPath
+         FileSizeType:(DDSizeType)type;
+/**
+ 通过相对路径获取文件夹大小
+ 
+ @param dirPath 文件夹相对路径
+ @param field 文件夹选址
+ @param type 返回文件夹大小的计算格式，kb,mb,gb,tb
+ @return 返回文件夹大小
+ */
+- (float)countDirSize:(NSString *)dirPath
+                Field:(DDFileField)field
+         FileSizeType:(DDSizeType)type;
 
 @end

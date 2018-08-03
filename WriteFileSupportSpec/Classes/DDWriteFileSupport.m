@@ -17,6 +17,12 @@
 #import "DDWriteFileSupport.h"
 #import <SDWebImage/SDImageCache.h>
 
+@interface DDWriteFileSupport()
+
+@property (nonatomic,strong) NSCache *fileCache;
+
+@end;
+
 @implementation DDWriteFileSupport
 
 + (DDWriteFileSupport *) ShareInstance {
@@ -27,657 +33,416 @@
     });
     return sharedWriteFileInstance;
 }
-
-#pragma 文件存储操作,documents存储常用文件，tmp存储临时文件，Library/Caches：存放缓存文件，保存应用的持久化数据
-//dirName存储的文件夹名字；fileName
-- (NSString *)writeFileAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(UIImage *)contents {
-    [self createDir:Dirname];
-    NSData *pictureData = [self transformPNG:contents];
-    NSString *returnString = [self createFile:fileName DirName:Dirname PictureData:pictureData];
-    return returnString;
-}
-
-- (NSString *)writeImageAndReturn:(NSString *)Dirname FileName:(NSString *)fileName Contents:(NSData *)contents{
-    [self createDir:Dirname];
-    NSString *returnString = [self createFile:fileName DirName:Dirname PictureData:contents];
-    return returnString;
-}
-
-- (NSString *)writeCacheReturn:(NSString *)firstDir SecondDir:(NSString *)secondDir ThirdDir:(NSString *)thirdDir FileName:(NSString *)fileName Contents:(UIImage *)contents {
-    NSString *firstPath = firstDir;
-    NSString *secondePath = [firstPath stringByAppendingPathComponent:secondDir];
-    NSString *thirdPath = [secondePath stringByAppendingPathComponent:thirdDir];
-    [self createDir:firstPath];
-    [self createDir:secondePath];
-    [self createDir:thirdPath];
-    NSData *pictureData = [self transformPNG:contents];
-    NSString *returnString = [self createFile:fileName DirName:thirdPath PictureData:pictureData];
-    return returnString;
-}
-
-//创建文件
-- (NSString *)createFile:(NSString *)FileName DirName:(NSString *)dirName PictureData:(NSData *)pictureData {
-    NSString *documentsPath =[self dirDoc];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
+#pragma mark - Main Methods
+- (BOOL)directWriteFile:(NSString *)path
+                   Data:(id)data {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *testPath = testDirectory;
-    NSString *filePath = [testPath stringByAppendingFormat:@"/%@.png",FileName];
-    BOOL res;
-    if(![fileManager fileExistsAtPath:filePath]) //如果不存在
-        res = [fileManager createFileAtPath:filePath contents:pictureData attributes:nil];
-    return filePath;
-}
-
-//创建文件
-- (NSString *)createMP3File:(NSString *)FileName DirName:(NSString *)dirName MP3Data:(NSData *)mp3Data {
-    NSString *documentsPath =[self dirDoc];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *testPath =testDirectory;
-    BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.mp3",FileName] contents:mp3Data attributes:nil];
-    if (res) {
-        
+    BOOL res = NO;
+    if ([data isKindOfClass:[NSDictionary class]] || [data isKindOfClass:[NSArray class]]) {
+        NSData *myData = [NSKeyedArchiver archivedDataWithRootObject:data];
+        res = [fileManager createFileAtPath:path
+                                   contents:myData
+                                 attributes:nil];
+    }else if ([data isKindOfClass:[UIImage class]]) {
+        NSData *myData = [self transformPNG:data];
+        res = [fileManager createFileAtPath:path
+                                   contents:myData
+                                 attributes:nil];
     }else {
-        
+        res = [fileManager createFileAtPath:path
+                                   contents:data
+                                 attributes:nil];
     }
-    return [testPath stringByAppendingFormat:@"/%@.png",FileName];
-}
-
-//创建缩略图
-- (NSString *)createCropFile:(NSString *)FileName DirName:(NSString *)dirName PictureData:(NSData *)pictureData {
-    NSString *documentsPath =[self dirDoc];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *testPath =testDirectory;
-    BOOL res=[fileManager createFileAtPath:[testPath stringByAppendingFormat:@"/%@.jpg",FileName] contents:pictureData attributes:nil];
     if (res) {
-        
-    }else {
-        
+        if (!_fileCache) {
+            _fileCache = [[NSCache alloc]init];
+        }
+        if (path) {
+            [_fileCache setObject:data forKey:path];
+        }
     }
-    return [testPath stringByAppendingFormat:@"/%@.jpg",FileName];
+    return res;
 }
 
-//读取文件夹下所有图片
-- (NSMutableArray *)readPicture:(NSString *)filePath {
-    NSMutableArray *filePaths = [@[] mutableCopy];
+- (BOOL)directWriteFile:(NSString *)path
+                   Data:(UIImage *)data
+              ImageType:(DDImgType)imgType {
+    NSData *imgData = [self getImageData:data
+                               DDImgType:imgType];
+    return [self directWriteFile:path
+                            Data:imgData];
+}
+
+- (BOOL)writeFile:(NSString *)path
+             Data:(id)data {
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    //在这里获取应用程序Documents文件夹里的文件及文件夹列表
+    BOOL res = NO;
+    if(![fileManager fileExistsAtPath:path]) {
+        if ([data isKindOfClass:[NSDictionary class]] || [data isKindOfClass:[NSArray class]]) {
+            NSData *myData = [NSKeyedArchiver archivedDataWithRootObject:data];
+            res = [fileManager createFileAtPath:path
+                                       contents:myData
+                                     attributes:nil];
+        }else if ([data isKindOfClass:[UIImage class]]) {
+            NSData *myData = [self transformPNG:data];
+            res = [fileManager createFileAtPath:path
+                                       contents:myData
+                                     attributes:nil];
+        }else {
+            res = [fileManager createFileAtPath:path
+                                       contents:data
+                                     attributes:nil];
+        }
+    }
+    if (res) {
+        if (!_fileCache) {
+            _fileCache = [[NSCache alloc]init];
+        }
+        if (path) {
+            [_fileCache setObject:data forKey:path];
+        }
+    }
+    return res;
+}
+
+- (BOOL)writeFile:(NSString *)path
+             Data:(id)data
+        ImageType:(DDImgType)imgType {
+    NSData *imgData = [self getImageData:data
+                               DDImgType:imgType];
+    return [self writeFile:path
+                      Data:imgData];
+}
+
+- (BOOL)directWriteFileType:(NSString *)path
+                       Data:(id)data
+                      Field:(DDFileField)field {
+    NSString *finalPath = [self getAbPath:path
+                                FileField:field];
+    return [self directWriteFile:finalPath
+                            Data:data];
+}
+
+- (BOOL)directWriteFileType:(NSString *)path
+                       Data:(id)data
+                  ImageType:(DDImgType)imgType
+                      Field:(DDFileField)field {
+    NSData *imgData = [self getImageData:data
+                               DDImgType:imgType];
+    return [self directWriteFileType:path
+                                Data:imgData
+                               Field:field];
+}
+
+- (BOOL)writeFileType:(NSString *)path
+                 Data:(id)data
+                Field:(DDFileField)field {
+    NSString *finalPath = [self getAbPath:path
+                                FileField:field];
+    return [self writeFile:finalPath
+                      Data:data];
+}
+
+- (BOOL)writeFileType:(NSString *)path
+                 Data:(id)data
+            ImageType:(DDImgType)imgType
+                Field:(DDFileField)field {
+    NSData *imgData = [self getImageData:data
+                               DDImgType:imgType];
+    return [self writeFileType:path
+                          Data:imgData
+                         Field:field];
+}
+
+- (BOOL)createDir:(NSString *)dirName
+            Filed:(DDFileField)field {
+    NSString *finalPath = [self getAbPath:dirName
+                                FileField:field];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    BOOL res = [fileManager createDirectoryAtPath:finalPath
+                      withIntermediateDirectories:YES
+                                       attributes:nil
+                                            error:nil];
+    return res;
+}
+
+- (BOOL)removeFile:(NSString *)filePath {
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    NSError *err;
+    BOOL result = NO;
+    BOOL bRet = [fileMgr fileExistsAtPath:filePath];
+    if (bRet)
+        result = [fileMgr removeItemAtPath:filePath
+                                     error:&err];
+    if (result) {
+        if (!_fileCache) {
+            _fileCache = [[NSCache alloc]init];
+        }
+        if (filePath) {
+            [_fileCache removeObjectForKey:filePath];
+        }
+    }
+    return result;
+}
+
+- (BOOL)removeDirFiles:(NSString *)dirPath {
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    NSArray *filePaths = [self readDirPath:dirPath];
+    __block BOOL result = NO;
+    if (filePaths.count > 0) {
+        result = YES;
+    }
+    [filePaths enumerateObjectsUsingBlock:^(NSString *filePath, NSUInteger idx, BOOL * _Nonnull stop) {
+        BOOL bRet = [fileMgr fileExistsAtPath:filePath];
+        BOOL removeResult = NO;
+        NSError *err;
+        if (bRet)
+            removeResult = [fileMgr removeItemAtPath:filePath
+                                               error:&err];
+        if (!removeResult) {
+            result = NO;
+            *stop = YES;
+        }
+    }];
+    return result;
+}
+
+- (NSMutableArray *)readDirPath:(NSString *)dirPath {
+    __block NSMutableArray *filePaths = [@[] mutableCopy];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
     NSError *error = nil;
-    NSArray *fileList = [[NSArray alloc] init];
-    NSString *picturePath;
     //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
-    fileList = [fileManager contentsOfDirectoryAtPath:filePath error:&error];
-    for(int i = 0;i < fileList.count;i++) {
-        picturePath = [NSString stringWithFormat:@"%@%@%@",filePath,@"/",fileList[i]];
-        [filePaths addObject:picturePath];
-    }
+    NSArray *fileList = [fileManager contentsOfDirectoryAtPath:dirPath
+                                                         error:&error];
+    [fileList enumerateObjectsUsingBlock:^(NSString *path, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *picturePath = [dirPath stringByAppendingPathComponent:path];
+        picturePath ? [filePaths addObject:picturePath] : nil;
+    }];
     return filePaths;
 }
 
 - (NSArray *)readDirNames:(NSString *)dirPath {
-    NSMutableArray *fileNames = [@[] mutableCopy];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     //在这里获取应用程序Documents文件夹里的文件及文件夹列表
     NSError *error = nil;
     NSArray *fileList = [[NSArray alloc] init];
     //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
-    fileList = [fileManager contentsOfDirectoryAtPath:dirPath error:&error];
+    fileList = [fileManager contentsOfDirectoryAtPath:dirPath
+                                                error:&error];
     return fileList;
 }
 
-- (void)removePicture:(NSString *)filePath {
-    NSFileManager *fileMgr = [NSFileManager defaultManager];
-    NSError *err;
-    BOOL bRet = [fileMgr fileExistsAtPath:filePath];
-    if (bRet) {
-        [fileMgr removeItemAtPath:filePath error:&err];
+- (id)readFile:(NSString *)filePath
+      FileType:(DDFileType)type {
+    BOOL isExist;
+    if (!_fileCache) {
+        _fileCache = [[NSCache alloc]init];
+    }
+    if ([_fileCache objectForKey:filePath]) {
+        return [_fileCache objectForKey:filePath];
+    }else {
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        isExist = [fileManager fileExistsAtPath:filePath];
+        if (isExist) {
+            NSData *tempData = [NSData dataWithContentsOfFile:filePath];
+            switch (type) {
+                case Image: {
+                    UIImage *fileImg = [UIImage imageWithData:tempData];
+                    [_fileCache setObject:fileImg forKey:filePath];
+                    return fileImg;
+                }
+                case Array: {
+                    NSArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
+                    [_fileCache setObject:array forKey:filePath];
+                    return array;
+                }
+                case Dictionary: {
+                    NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
+                    [_fileCache setObject:dictionary forKey:filePath];
+                    return dictionary;
+                }
+                case Data: {
+                    [_fileCache setObject:tempData forKey:filePath];
+                    return tempData;
+                }
+                default: {
+                    [_fileCache setObject:tempData forKey:filePath];
+                    return tempData;
+                }
+            }
+        }else {
+            return nil;
+        }
     }
 }
 
-#pragma 剪切
-- (UIImage *) imageByScalingProportionallyToSize:(CGSize)targetSize sourceImage:(UIImage *)sourceImage {
+- (id)readFile:(NSString *)filePath
+      FileType:(DDFileType)type
+     FileField:(DDFileField)field {
+    NSString *finalPath = [self getAbPath:filePath
+                                FileField:field];
+    return [self readFile:finalPath
+                 FileType:type
+                FileField:field];
+}
+
+- (void)flushCache {
+    [_fileCache removeAllObjects];
+}
+
+- (float)countFileSize:(NSString *)filePath
+          FileSizeType:(DDSizeType)type {
+    NSFileManager *manager = [NSFileManager defaultManager];
+    float size = 0;
+    if ([manager fileExistsAtPath:filePath]) {
+        size = [[manager attributesOfItemAtPath:filePath error:nil] fileSize];
+    }
+    switch (type) {
+        case KB:
+            size = size/1024.0;
+            break;
+        case MB:
+            size = size/(1024.0*1024.0);
+            break;
+        case GB:
+            size = size/(1024.0*1024.0*1024.0);
+            break;
+        case TB:
+            size = size/(1024.0*1024.0*1024.0*1024.0);
+            break;
+        default:
+            size = size/1024.0;
+            break;
+    }
+    return size;
+}
+
+- (float)countFileSize:(NSString *)filePath
+                 Field:(DDFileField)field
+          FileSizeType:(DDSizeType)type {
+    NSString *finalPath = [self getAbPath:filePath
+                                FileField:field];
+    return [self countFileSize:finalPath
+                  FileSizeType:type];
+}
+
+- (float)countDirSize:(NSString *)dirPath
+         FileSizeType:(DDSizeType)type {
+    __block float size = 0;
+    NSFileManager *manager = [NSFileManager defaultManager];
+    if ([manager fileExistsAtPath:dirPath]) {
+        NSArray *dirArr = [self readDirPath:dirPath];
+        [dirArr enumerateObjectsUsingBlock:^(NSString *file, NSUInteger idx, BOOL * _Nonnull stop) {
+            size += [self countFileSize:file
+                           FileSizeType:type];
+        }];
+    }
+    return size;
+}
+
+- (float)countDirSize:(NSString *)dirPath
+                Field:(DDFileField)field
+         FileSizeType:(DDSizeType)type {
+    NSString *finalPath = [self getAbPath:dirPath
+                                FileField:field];
+    return [self countDirSize:finalPath
+                 FileSizeType:type];
+}
+#pragma mark - Support Methods
+/**
+ 通过选择的相对位置获取绝对路径
+ 
+ @param filePath 相对路径
+ @param field 选择位置
+ @return 返回绝对路径
+ */
+- (NSString *)getAbPath:(NSString *)filePath
+              FileField:(DDFileField)field {
+    ///选择的路径位置
+    NSString *typePath;
+    switch (field) {
+        case Documents: {
+            typePath = [self getDocPath];
+        }
+            break;
+        case LibraryCaches: {
+            typePath = [self getCachePath];
+        }
+            break;
+        case Temp: {
+            typePath = [self getTempPath];
+        }
+            break;
+        default:
+            break;
+    }
+    NSString *finalPath = [typePath stringByAppendingPathComponent:filePath];
+    return finalPath;
+}
+
+- (NSData *)getImageData:(UIImage *)image
+               DDImgType:(DDImgType)imgType {
+    NSData *imgData;
+    switch (imgType) {
+        case PNG:
+            imgData = [self transformPNG:image];
+            break;
+        case JPEG:
+            imgData = [self transformJEPG:image];
+            break;
+        default:
+            imgData = [self transformPNG:image];
+            break;
+    }
+    return imgData;
+}
+/**
+ 剪切图片为目标size
+ 
+ @param targetSize 目标size
+ @param sourceImage 源图片
+ @return 返回剪切后的图片
+ */
+- (UIImage *)imageByScalingProportionallyToSize:(CGSize)targetSize
+                                    SourceImage:(UIImage *)sourceImage {
     UIGraphicsBeginImageContext(targetSize);
     [sourceImage drawInRect:CGRectMake(0, 0, targetSize.width, targetSize.height)];
     UIImage* scaledImage = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     return scaledImage;
-    UIImage *newImage = nil;
-    CGSize imageSize = sourceImage.size;
-    CGFloat width = imageSize.width;
-    CGFloat height = imageSize.height;
-    CGFloat targetWidth = targetSize.width;
-    CGFloat targetHeight = targetSize.height;
-    CGFloat scaleFactor = 0.0;
-    CGFloat scaledWidth = targetWidth;
-    CGFloat scaledHeight = targetHeight;
-    CGPoint thumbnailPoint = CGPointMake(0.0,0.0);
-    UIGraphicsBeginImageContext(targetSize); // this will crop
-    CGRect thumbnailRect = CGRectZero;
-    thumbnailRect.origin = thumbnailPoint;
-    thumbnailRect.size.width  = scaledWidth;
-    thumbnailRect.size.height = scaledHeight;
-    
-    [sourceImage drawInRect:thumbnailRect];
-    
-    newImage = UIGraphicsGetImageFromCurrentImageContext();
-    if(newImage == nil)
-        NSLog(@"could not scale image");
-    //pop the context to get back to the default
-    UIGraphicsEndImageContext();
-    return newImage;
 }
-
-#pragma 获取当前时间和设备id处理为需要的字符串
-- (NSString *)getTimeAndDeviceString {
-    return [self getDateTimeStr];
-}
-
-//取得当前时间字符串
-- (NSString*)getDateTimeStr {
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyyMMddHHmmssSSS"];
-    
-    NSDate *now = [NSDate date];
-    
-    NSString *theDate = [dateFormatter stringFromDate:now];
-    
-    return theDate;
-}
-
-#pragma 转化UIImage为NSData样例,方案废弃,改用文件存储image，数据库存储图片存储路径
-#pragma PNG
+///PNG to Data
 - (NSData *)transformPNG:(UIImage *)image {
-    NSData *insertPngImageData=UIImagePNGRepresentation(image);
+    NSData *insertPngImageData = UIImagePNGRepresentation(image);
     return insertPngImageData;
 }
-
-#pragma JEPG
+///JEPG to Data
 - (NSData *)transformJEPG:(UIImage *)image {
-    NSData *insertJepgImageData=UIImageJPEGRepresentation(image,1.0);
+    NSData *insertJepgImageData = UIImageJPEGRepresentation(image,1.0);
     return insertJepgImageData;
 }
-
-- (NSString *)dirDoc {
+///获取documents路径
+- (NSString *)getDocPath {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *documentsDirectory = [paths objectAtIndex:0];
     return documentsDirectory;
 }
-
 ///获取Library目录
-- (void)dirLib {
-    //[NSHomeDirectory() stringByAppendingPathComponent:@"Library"];
+- (NSString *)getLibPath {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
     NSString *libraryDirectory = [paths objectAtIndex:0];
+    return libraryDirectory;
 }
-
 ///获取Cache目录
-- (NSString *)dirCache {
+- (NSString *)getCachePath {
     NSArray *cacPath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *cachePath = [cacPath objectAtIndex:0];
     return cachePath;
 }
-
-///返回Cache目录
-- (NSString *)getDirCache {
-    NSArray *cacPath = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *cachePath = [cacPath objectAtIndex:0];
-    return cachePath;
-}
-
 ///获取Tmp目录
-- (void)dirTmp {
-    //[NSHomeDirectory() stringByAppendingPathComponent:@"tmp"];
+- (NSString *)getTempPath {
     NSString *tmpDirectory = NSTemporaryDirectory();
-}
-
-///创建文件夹
-- (void)createDir:(NSString *)DirName {
-    NSString *documentsPath = [self dirDoc];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:DirName];
-    // 创建目录
-    BOOL res = [fileManager createDirectoryAtPath:testDirectory withIntermediateDirectories:YES attributes:nil error:nil];
-    if (res){
-        
-    }
-    else {
-        
-    }
-}
-
-///写数组
-- (NSString *)writeArray:(NSArray *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName {
-    NSString *cachePath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *testDirectory = [cachePath stringByAppendingPathComponent:dirName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if (![fileManager fileExistsAtPath:testDirectory]) {
-        [self createDir:dirName];
-    }
-    NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
-    BOOL res = [contents writeToFile:testPath atomically:YES];
-    
-    if (fileName != nil&&contents != nil) {
-        [_FileCache setObject:contents forKey:fileName];
-    }
-    if (res) {
-        
-    }
-    else {
-        
-    }
-    return testPath;
-}
-
-///写字典
-- (NSString *)writeDictionary:(NSDictionary *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName {
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if (![fileManager fileExistsAtPath:testDirectory]) {
-        [self createDir:dirName];
-    }
-    NSData *myData = [NSKeyedArchiver archivedDataWithRootObject:contents];
-    NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
-    BOOL res = [myData writeToFile:testPath atomically:YES];
-    if (fileName != nil&&contents != nil) {
-        [_FileCache setObject:contents forKey:fileName];
-    }
-    if (res) {
-        
-    }
-    else{
-        
-    }
-    return testPath;
-}
-
-- (NSString *)writeData:(NSData *)contents DirName:(NSString *)dirName FileName:(NSString *)fileName {
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:dirName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if (![fileManager fileExistsAtPath:testDirectory]) {
-        [self createDir:dirName];
-    }
-    NSString *testPath = [testDirectory stringByAppendingPathComponent:fileName];
-    BOOL res = [contents writeToFile:testPath atomically:YES];
-    if (fileName != nil && contents != nil) {
-        [_FileCache setObject:contents forKey:fileName];
-    }
-    if (res){
-        
-    }
-    else{
-        
-    }
-    return testPath;
-}
-
-- (BOOL)writeData:(NSData *)contents FileName:(NSString *)fileName {
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *testPath = [documentsPath stringByAppendingPathComponent:fileName];
-    BOOL res = [contents writeToFile:testPath atomically:YES];
-    if (fileName != nil && contents != nil) {
-        [_FileCache setObject:contents forKey:fileName];
-    }
-    if (res){
-        
-    }
-    else{
-        
-    }
-    return res;
-}
-
-- (UIImage *)readImg:(NSString *)filePath {
-    NSData *tempData;
-    BOOL isExist;
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSData *cacheData = [_FileCache objectForKey:filePath];
-    if(cacheData){
-        return [UIImage imageWithData:cacheData];
-    }else{
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        isExist = [fileManager fileExistsAtPath:filePath];
-        if (isExist) {
-            tempData = [NSData dataWithContentsOfFile:filePath];
-            if (tempData) {
-                [_FileCache setObject:tempData forKey:filePath];
-            }
-            return [UIImage imageWithData:tempData];
-        }else{
-            return nil;
-        }
-    }
-}
-
-- (UIImage *)readImgNotCache:(NSString *)fileName {
-    NSData *tempData;
-    BOOL isExist;
-    NSString *documentsPath =[self dirDoc];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:fileName];
-    NSData *cacheData;
-    if(cacheData){
-        return [UIImage imageWithData:cacheData];
-    }else{
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        isExist = [fileManager fileExistsAtPath:testDirectory];
-        if (isExist) {
-            tempData = [NSData dataWithContentsOfFile:testDirectory];
-            return [UIImage imageWithData:tempData];
-        }else{
-            return nil;
-        }
-    }
-}
-
-- (BOOL)isFileExist:(NSString *)fileName{
-    BOOL isExist;
-    NSString *documentsPath =[self dirDoc];
-    NSString *testDirectory = [documentsPath stringByAppendingPathComponent:fileName];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    isExist = [fileManager fileExistsAtPath:testDirectory];
-    return isExist;
-}
-
-- (NSMutableArray *)readArray:(NSString *)dirName FileName:(NSString *)fileName {
-    NSMutableArray *tempArray = [NSMutableArray array];
-    BOOL isExist;
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
-    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
-    
-    NSMutableArray *cacheData = [_FileCache objectForKey:fileName];
-    if(cacheData) {
-        return cacheData;
-    }else {
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        isExist = [fileManager fileExistsAtPath:testDirectory];
-        if (isExist) {
-            tempArray = [NSMutableArray arrayWithContentsOfFile:testDirectory];
-            [_FileCache setObject:tempArray forKey:fileName];
-            return tempArray;
-        }else{
-            return nil;
-        }
-    }
-}
-
-- (NSMutableDictionary *)readDictionary:(NSString *)dirName FileName:(NSString *)fileName {
-    NSMutableDictionary *tempDic = [NSMutableDictionary dictionary];
-    BOOL isExist;
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
-    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
-    
-    NSMutableDictionary *cacheData = [_FileCache objectForKey:fileName];
-    if(cacheData){
-        return cacheData;
-    }else{
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        isExist = [fileManager fileExistsAtPath:testDirectory];
-        if (isExist) {
-            tempDic = (NSMutableDictionary *)[NSKeyedUnarchiver unarchiveObjectWithData:[NSData dataWithContentsOfFile:testDirectory]];
-            [_FileCache setObject:tempDic forKey:fileName];
-            return tempDic;
-        }else{
-            return nil;
-        }
-    }
-}
-
-- (NSData *)readData:(NSString *)dirName FileName:(NSString *)fileName {
-    NSData *tempData;
-    BOOL isExist;
-    NSString *documentsPath =[self dirDoc];
-    if (!_FileCache) {
-        _FileCache = [[NSCache alloc]init];
-    }
-    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
-    NSString *testDirectory = [tempPath stringByAppendingPathComponent:fileName];
-    NSData *cacheData = [_FileCache objectForKey:fileName];
-    if(cacheData){
-        return cacheData;
-    }else{
-        NSFileManager *fileManager = [NSFileManager defaultManager];
-        isExist = [fileManager fileExistsAtPath:testDirectory];
-        if (isExist) {
-            tempData = [NSData dataWithContentsOfFile:testDirectory];
-            [_FileCache setObject:tempData forKey:fileName];
-            return tempData;
-        }else{
-            return nil;
-        }
-    }
-}
-
-- (void)flushCache{
-    [_FileCache removeAllObjects];
-}
-
-- (void)removeFile:(NSString *)fileName {
-    BOOL isExist;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *documentsPath = [self dirDoc];
-    NSString *finalPath = [documentsPath stringByAppendingPathComponent:fileName];
-    isExist = [fileManager fileExistsAtPath:finalPath];
-    if (isExist)
-        [fileManager removeItemAtPath:finalPath error:NULL];
-}
-
-- (void)removeDirFile:(NSString *)dirName FileName:(NSString *)fileName {
-    BOOL isExist;
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSString *documentsPath = [self dirDoc];
-    NSString *tempPath = [documentsPath stringByAppendingPathComponent:dirName];
-    NSString *finalPath = [tempPath stringByAppendingPathComponent:fileName];
-    isExist = [fileManager fileExistsAtPath:finalPath];
-    if (isExist)
-        [fileManager removeItemAtPath:finalPath error:NULL];
-}
-
-#pragma 读取文件
-- (UIImage *)getLocalMark:(NSString *)filePath {
-    UIImage *returnImage;
-    returnImage = [UIImage imageNamed:filePath];
-    return returnImage;
-}
-
-//删除所有documents下文件用以重置用户信息
-- (void)removeAllDirDocuments {
-    NSString *documentsDirectory = [self dirDoc];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSArray *contents = [fileManager contentsOfDirectoryAtPath:documentsDirectory error:NULL];
-    NSEnumerator *e = [contents objectEnumerator];
-    NSString *filename;
-    while ((filename = [e nextObject])) {
-        NSString *temp = [documentsDirectory stringByAppendingPathComponent:filename];
-        [fileManager removeItemAtPath:temp error:NULL];
-    }
-}
-
-//计算缓存大小，之前是计算整个文件夹大小，现在改为计算图片的大小，并在删除缓存的时候也是对应的删除这部分计算大小文件的缓存
-- (float)countAllDirCaches {
-    NSString *documentsDirectory = [self dirCache];
-//    NSString *finalPath = [[documentsDirectory stringByAppendingPathComponent:@"default"] stringByAppendingPathComponent:@"com.hackemist.SDWebImageCache.default"];
-    NSString *tempPath = [documentsDirectory stringByAppendingPathComponent:@"default"];
-    NSFileManager* manager = [NSFileManager defaultManager];
-    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:tempPath] objectEnumerator];
-    NSString *fileName;
-    NSString *finalPath;
-    while ((fileName = [childFilesEnumerator nextObject]) != nil) {
-        finalPath = [tempPath stringByAppendingPathComponent:fileName];
-        break;
-    }
-    float size = [self folderSizeAtPath:finalPath];
-    return size;
-}
-
-
-//计算缓存大小
-- (float)countAllDirDocuments {
-    NSString *documentsDirectory = [self dirDoc];
-    float size = [self folderSizeAtPath:documentsDirectory];
-    return size;
-}
-
-- (float)countSingleDirDocuments:(NSString *)fileName {
-    NSString *documentsDirectory = [self dirDoc];
-    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
-    float size = [self folderSizeAtPath:temp];
-    return size;
-}
-
-- (float)countSingleDirFile:(NSString *)fileName {
-    NSString *documentsDirectory = [self dirDoc];
-    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
-    float size = [self fileSizeAtPath:temp];
-    return size/(1024.0*1024.0);
-}
-
-//清除dir缓存文件
-- (void)removeCache:(NSString *)fileName {
-    NSFileManager *fileMgr = [NSFileManager defaultManager];
-    NSError *err;
-    NSString *documentsDirectory = [self dirDoc];
-    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
-    BOOL bRet = [fileMgr fileExistsAtPath:temp];
-    if (bRet){
-        [fileMgr removeItemAtPath:temp error:&err];
-    }
-}
-
-/**
- *  清除Cache缓存文件下某个文件
- */
-- (void)removeCacheUnderCache:(NSString *)fileName {
-    NSFileManager *fileMgr = [NSFileManager defaultManager];
-    NSError *err;
-    NSString *documentsDirectory = [self getDirCache];
-    NSString *temp = [documentsDirectory stringByAppendingPathComponent:fileName];
-    BOOL bRet = [fileMgr fileExistsAtPath:temp];
-    if (bRet){
-        [fileMgr removeItemAtPath:temp error:&err];
-    }
-}
-
-/**
- *  清除所有Cache缓存文件,目前是清除sdwebimage的图片缓存
- */
-- (void)removeAllCache {
-    NSString *documentsDirectory = [self getDirCache];
-    NSString *tempPath = [documentsDirectory stringByAppendingPathComponent:@"default"];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    
-    NSEnumerator *childFilesEnumerator = [[fileManager subpathsAtPath:tempPath] objectEnumerator];
-    NSString *fileName;
-    NSString *finalPath;
-    while ((fileName = [childFilesEnumerator nextObject]) != nil) {
-        finalPath = [tempPath stringByAppendingPathComponent:fileName];
-        break;
-    }
-    
-    NSArray *contents = [fileManager contentsOfDirectoryAtPath:finalPath error:NULL];
-    NSEnumerator *e = [contents objectEnumerator];
-    NSString *tempFilename;
-    while ((tempFilename = [e nextObject])) {
-        NSString *temp = [finalPath stringByAppendingPathComponent:tempFilename];
-        [fileManager removeItemAtPath:temp error:NULL];
-    }
-}
-
-//单个文件的大小
-- (long long) fileSizeAtPath:(NSString*) filePath {
-    NSFileManager* manager = [NSFileManager defaultManager];
-    if ([manager fileExistsAtPath:filePath]) {
-        return [[manager attributesOfItemAtPath:filePath error:nil] fileSize];
-    }
-    return 0;
-}
-
-//遍历文件夹获得文件夹大小，返回多少M
-- (float )folderSizeAtPath:(NSString*) folderPath {
-    NSFileManager* manager = [NSFileManager defaultManager];
-    if (![manager fileExistsAtPath:folderPath]) return 0;
-    NSEnumerator *childFilesEnumerator = [[manager subpathsAtPath:folderPath] objectEnumerator];
-    NSString* fileName;
-    long long folderSize = 0;
-    while ((fileName = [childFilesEnumerator nextObject]) != nil) {
-        NSString *fileAbsolutePath = [folderPath stringByAppendingPathComponent:fileName];
-        folderSize += [self fileSizeAtPath:fileAbsolutePath];
-    }
-    return folderSize/(1024.0*1024.0);
-}
-
-#pragma mark - 2017-04-13
-
-/// 整个caches文件夹大小
-- (float)tt_cachesFolderSize {
-    return [self tt_folderSizeAtPath:[self getDirCache]];
-}
-
-/// 计算整个文件夹大小
-- (float)tt_folderSizeAtPath:(NSString *)path{
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    float folderSize;
-    if ([fileManager fileExistsAtPath:path]) {
-        NSArray *childerFiles = [fileManager subpathsAtPath:path];
-        for (NSString *fileName in childerFiles) {
-            NSString *absolutePath = [path stringByAppendingPathComponent:fileName];
-            folderSize += [self fileSizeAtPath:absolutePath];
-        }
-        //SDWebImage框架自身计算缓存的实现
-        folderSize += [[SDImageCache sharedImageCache] getSize] ;
-        return folderSize / 1024.0 / 1024.0;
-    }
-    return 0;
-}
-
-/// 计算单个文件大小
-- (float)tt_fileSizeAtPath:(NSString *)path {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if([fileManager fileExistsAtPath:path]){
-        long long size = [fileManager attributesOfItemAtPath:path error:nil].fileSize;
-        return (size / 1024.0 / 1024.0);
-    }
-    return 0;
-}
-
-- (void)tt_cleanCaches {
-    [self cleanCaches:[self getDirCache]];
-}
-
-- (void)cleanCaches:(NSString *)path{
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if ([fileManager fileExistsAtPath:path]) {
-        NSArray *childerFiles = [fileManager subpathsAtPath:path];
-        for (NSString *fileName in childerFiles) {
-            //如有需要，加入条件，过滤掉不想删除的文件
-            NSString *absolutePath = [path stringByAppendingPathComponent:fileName];
-            [fileManager removeItemAtPath:absolutePath error:nil];
-        }
-    }
-    [[SDImageCache sharedImageCache] clearDiskOnCompletion:nil];
+    return tmpDirectory;
 }
 
 @end
