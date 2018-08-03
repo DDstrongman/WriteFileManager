@@ -1,9 +1,9 @@
 # WriteFileSupportSpec
 
-[![CI Status](http://img.shields.io/travis/DDStrongman/WriteFileSupportSpec.svg?style=flat)](https://travis-ci.org/DDStrongman/WriteFileSupportSpec)
-[![Version](https://img.shields.io/cocoapods/v/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)
-[![License](https://img.shields.io/cocoapods/l/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)
-[![Platform](https://img.shields.io/cocoapods/p/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)
+<!--[![CI Status](http://img.shields.io/travis/DDStrongman/WriteFileSupportSpec.svg?style=flat)](https://travis-ci.org/DDStrongman/WriteFileSupportSpec)-->
+<!--[![Version](https://img.shields.io/cocoapods/v/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)-->
+<!--[![License](https://img.shields.io/cocoapods/l/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)-->
+<!--[![Platform](https://img.shields.io/cocoapods/p/WriteFileSupportSpec.svg?style=flat)](http://cocoapods.org/pods/WriteFileSupportSpec)-->
 
 ## Example
 
@@ -16,7 +16,7 @@
 @param field 选择type <br>
 @return 返回写入结果 <br>
 */ <br>
-- (BOOL)writeFileType:(NSString *)path <br>
+ -- (BOOL)writeFileType:(NSString *)path <br>
                             Data:(id)data <br>
                             Field:(DDFileField)field  <br>
 具体内容请参考.h文件内说明
