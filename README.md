@@ -7,18 +7,18 @@
 
 ## Example
 
-写文件函数
-/**
-存储data流到本地，相对路径为path，路径上已存在文件则返回失败，可通过参数选择三处位置
+写文件函数 <br>
+/** <br>
+存储data流到本地，相对路径为path，路径上已存在文件则返回失败，可通过参数选择三处位置 <br>
 
-@param path 文件相对路径，如果直接给文件名则直接写
-@param data 二进制流，数组或字典
-@param field 选择type
-@return 返回写入结果
-*/
-- (BOOL)writeFileType:(NSString *)path
-                            Data:(id)data
-                            Field:(DDFileField)field
+@param path 文件相对路径，如果直接给文件名则直接写 <br>
+@param data 二进制流，数组或字典 <br>
+@param field 选择type <br>
+@return 返回写入结果 <br>
+*/ <br>
+- (BOOL)writeFileType:(NSString *)path <br>
+                            Data:(id)data <br>
+                            Field:(DDFileField)field  <br>
 具体内容请参考.h文件内说明
 
 ## Requirements
