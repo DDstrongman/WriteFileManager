@@ -18,8 +18,8 @@
 @return 返回写入结果 
 */ 
  -- (BOOL)writeFileType:(NSString *)path 
-                            Data:(id)data 
-                            Field:(DDFileField)field  
+                   Data:(id)data 
+                  Field:(DDFileField)field  
 ```
 **具体内容请参考.h文件内说明**
 
