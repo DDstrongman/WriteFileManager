@@ -42,6 +42,7 @@ typedef enum {
 }DDImgType;
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 @interface DDWriteFileSupport : NSObject
 
