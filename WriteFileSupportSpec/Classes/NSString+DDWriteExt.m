@@ -7,7 +7,6 @@
 
 #import "NSString+DDWriteExt.h"
 
-#import <AppKit/AppKit.h>
 #import <CommonCrypto/CommonDigest.h>
 
 
