@@ -386,28 +386,24 @@
         isExist = [fileManager fileExistsAtPath:filePath];
         if (isExist) {
             NSData *tempData = [NSData dataWithContentsOfFile:filePath];
+            [_fileCache setObject:tempData forKey:filePath];
             switch (type) {
                 case DDFileTypeImage: {
                     UIImage *fileImg = [UIImage imageWithData:tempData];
-                    [_fileCache setObject:fileImg forKey:filePath];
                     return fileImg;
                 }
                 case DDFileTypeArray: {
                     NSArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
-                    [_fileCache setObject:array forKey:filePath];
                     return array;
                 }
                 case DDFileTypeDictionary: {
                     NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
-                    [_fileCache setObject:dictionary forKey:filePath];
                     return dictionary;
                 }
                 case DDFileTypeData: {
-                    [_fileCache setObject:tempData forKey:filePath];
                     return tempData;
                 }
                 default: {
-                    [_fileCache setObject:tempData forKey:filePath];
                     return tempData;
                 }
             }
