@@ -221,20 +221,22 @@
              data:(id)data {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = NO;
+    NSData *myData;
     if(![fileManager fileExistsAtPath:path]) {
         if ([data isKindOfClass:[NSDictionary class]] || [data isKindOfClass:[NSArray class]]) {
-            NSData *myData = [NSKeyedArchiver archivedDataWithRootObject:data];
+            myData = [NSKeyedArchiver archivedDataWithRootObject:data];
             res = [fileManager createFileAtPath:path
                                        contents:myData
                                      attributes:nil];
-        }else if ([data isKindOfClass:[UIImage class]]) {
-            NSData *myData = [self transformPNG:data];
+        } else if ([data isKindOfClass:[UIImage class]]) {
+            myData = [self transformPNG:data];
             res = [fileManager createFileAtPath:path
                                        contents:myData
                                      attributes:nil];
-        }else {
+        } else {
+            myData = data;
             res = [fileManager createFileAtPath:path
-                                       contents:data
+                                       contents:myData
                                      attributes:nil];
         }
     }
@@ -243,7 +245,7 @@
             _fileCache = [[NSCache alloc]init];
         }
         if (path) {
-            [_fileCache setObject:data forKey:path];
+            [_fileCache setObject:myData forKey:path];
         }
     }
     return res;
