@@ -15,7 +15,8 @@
 
 
 #import "DDWriteFileSupport.h"
-#import <SDWebImage/SDImageCache.h>
+
+#import "NSString+DDWriteExt.h"
 
 @interface DDWriteFileSupport()
 
@@ -34,8 +35,151 @@
     return sharedWriteFileInstance;
 }
 #pragma mark - Main Methods
+- (nullable NSString *)searchFileByUrl:(nullable NSString *)url
+                                 filed:(DDFileField)filed {
+    if (!url)
+        return nil;
+    switch (filed) {
+        case DDFieldDocuments: {
+            NSString *documentPath = [self getDocPath];
+            return [documentPath stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+        case DDFieldLibraryCaches: {
+            NSString *libPath = [self getLibPath];
+            return [libPath stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+        case DDFieldTemp: {
+            NSString *tempPath = [self getTempPath];
+            return [tempPath stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+            
+        default: {
+            NSString *documentPath = [self getDocPath];
+            return [documentPath stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+    }
+}
+
+- (nullable NSString *)searchFileByUrl:(nullable NSString *)url
+                               dirName:(nullable NSString *)dirName
+                                 filed:(DDFileField)filed {
+    if (!url)
+        return nil;
+    switch (filed) {
+        case DDFieldDocuments: {
+            NSString *documentPath = [self getDocPath];
+            return [[documentPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+        case DDFieldLibraryCaches: {
+            NSString *libPath = [self getLibPath];
+            return [[libPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+        case DDFieldTemp: {
+            NSString *tempPath = [self getTempPath];
+            return [[tempPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+            
+        default: {
+            NSString *documentPath = [self getDocPath];
+            return [[documentPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:[url DDWrite_md5Mod16]];
+        }
+            break;
+    }
+}
+
+- (nullable NSString *)searchFileByFileName:(nullable NSString *)name
+                                      filed:(DDFileField)filed {
+    if (!name)
+        return nil;
+    switch (filed) {
+        case DDFieldDocuments: {
+            NSString *documentPath = [self getDocPath];
+            return [documentPath stringByAppendingPathComponent:name];
+        }
+            break;
+        case DDFieldLibraryCaches: {
+            NSString *libPath = [self getLibPath];
+            return [libPath stringByAppendingPathComponent:name];
+        }
+            break;
+        case DDFieldTemp: {
+            NSString *tempPath = [self getTempPath];
+            return [tempPath stringByAppendingPathComponent:name];
+        }
+            break;
+            
+        default: {
+            NSString *documentPath = [self getDocPath];
+            return [documentPath stringByAppendingPathComponent:name];
+        }
+            break;
+    }
+}
+
+- (nullable NSString *)searchFileByFileName:(nullable NSString *)name
+                                    dirName:(nullable NSString *)dirName
+                                      filed:(DDFileField)filed {
+    if (!name)
+        return nil;
+    switch (filed) {
+        case DDFieldDocuments: {
+            NSString *documentPath = [self getDocPath];
+            return [[documentPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:name];
+        }
+            break;
+        case DDFieldLibraryCaches: {
+            NSString *libPath = [self getLibPath];
+            return [[libPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:name];
+        }
+            break;
+        case DDFieldTemp: {
+            NSString *tempPath = [self getTempPath];
+            return [[tempPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:name];
+        }
+            break;
+            
+        default: {
+            NSString *documentPath = [self getDocPath];
+            return [[documentPath stringByAppendingPathComponent:dirName] stringByAppendingPathComponent:name];
+        }
+            break;
+    }
+}
+
+- (nullable NSMutableArray <NSString *> *)readDirPath:(nullable NSString *)dirPath {
+    __block NSMutableArray *filePaths = [@[] mutableCopy];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSError *error = nil;
+    //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
+    NSArray *fileList = [fileManager contentsOfDirectoryAtPath:dirPath
+                                                         error:&error];
+    [fileList enumerateObjectsUsingBlock:^(NSString *path, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *picturePath = [dirPath stringByAppendingPathComponent:path];
+        picturePath ? [filePaths addObject:picturePath] : nil;
+    }];
+    return filePaths;
+}
+
+- (nullable NSArray <NSString *> *)readDirNames:(nullable NSString *)dirPath {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    //在这里获取应用程序Documents文件夹里的文件及文件夹列表
+    NSError *error = nil;
+    NSArray *fileList = [[NSArray alloc] init];
+    //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
+    fileList = [fileManager contentsOfDirectoryAtPath:dirPath
+                                                error:&error];
+    return fileList;
+}
+
 - (BOOL)directWriteFile:(NSString *)path
-                   Data:(id)data {
+                   data:(id)data {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = NO;
     if ([data isKindOfClass:[NSDictionary class]] || [data isKindOfClass:[NSArray class]]) {
@@ -43,12 +187,12 @@
         res = [fileManager createFileAtPath:path
                                    contents:myData
                                  attributes:nil];
-    }else if ([data isKindOfClass:[UIImage class]]) {
+    } else if ([data isKindOfClass:[UIImage class]]) {
         NSData *myData = [self transformPNG:data];
         res = [fileManager createFileAtPath:path
                                    contents:myData
                                  attributes:nil];
-    }else {
+    } else {
         res = [fileManager createFileAtPath:path
                                    contents:data
                                  attributes:nil];
@@ -65,16 +209,16 @@
 }
 
 - (BOOL)directWriteFile:(NSString *)path
-                   Data:(UIImage *)data
-              ImageType:(DDImgType)imgType {
-    NSData *imgData = [self getImageData:data
+                    img:(nonnull UIImage *)img
+              imageType:(DDImgType)imgType {
+    NSData *imgData = [self getImageData:img
                                DDImgType:imgType];
     return [self directWriteFile:path
-                            Data:imgData];
+                            data:imgData];
 }
 
 - (BOOL)writeFile:(NSString *)path
-             Data:(id)data {
+             data:(id)data {
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = NO;
     if(![fileManager fileExistsAtPath:path]) {
@@ -106,58 +250,58 @@
 }
 
 - (BOOL)writeFile:(NSString *)path
-             Data:(id)data
-        ImageType:(DDImgType)imgType {
-    NSData *imgData = [self getImageData:data
+              img:(nonnull UIImage *)img
+        imageType:(DDImgType)imgType {
+    NSData *imgData = [self getImageData:img
                                DDImgType:imgType];
     return [self writeFile:path
-                      Data:imgData];
+                      data:imgData];
 }
 
 - (BOOL)directWriteFileType:(NSString *)path
-                       Data:(id)data
-                      Field:(DDFileField)field {
+                       data:(id)data
+                      field:(DDFileField)field {
     NSString *finalPath = [self getAbPath:path
-                                FileField:field];
+                                fileField:field];
     return [self directWriteFile:finalPath
-                            Data:data];
+                            data:data];
 }
 
 - (BOOL)directWriteFileType:(NSString *)path
-                       Data:(id)data
-                  ImageType:(DDImgType)imgType
-                      Field:(DDFileField)field {
-    NSData *imgData = [self getImageData:data
+                        img:(nonnull UIImage *)img
+                  imageType:(DDImgType)imgType
+                      field:(DDFileField)field {
+    NSData *imgData = [self getImageData:img
                                DDImgType:imgType];
     return [self directWriteFileType:path
-                                Data:imgData
-                               Field:field];
+                                data:imgData
+                               field:field];
 }
 
 - (BOOL)writeFileType:(NSString *)path
-                 Data:(id)data
-                Field:(DDFileField)field {
+                 data:(id)data
+                field:(DDFileField)field {
     NSString *finalPath = [self getAbPath:path
-                                FileField:field];
+                                fileField:field];
     return [self writeFile:finalPath
-                      Data:data];
+                      data:data];
 }
 
 - (BOOL)writeFileType:(NSString *)path
-                 Data:(id)data
-            ImageType:(DDImgType)imgType
-                Field:(DDFileField)field {
-    NSData *imgData = [self getImageData:data
+                  img:(nonnull UIImage *)img
+            imageType:(DDImgType)imgType
+                field:(DDFileField)field {
+    NSData *imgData = [self getImageData:img
                                DDImgType:imgType];
     return [self writeFileType:path
-                          Data:imgData
-                         Field:field];
+                          data:imgData
+                         field:field];
 }
 
 - (BOOL)createDir:(NSString *)dirName
-            Filed:(DDFileField)field {
+            filed:(DDFileField)field {
     NSString *finalPath = [self getAbPath:dirName
-                                FileField:field];
+                                fileField:field];
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = [fileManager createDirectoryAtPath:finalPath
                       withIntermediateDirectories:YES
@@ -207,61 +351,56 @@
     return result;
 }
 
-- (NSMutableArray *)readDirPath:(NSString *)dirPath {
-    __block NSMutableArray *filePaths = [@[] mutableCopy];
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    NSError *error = nil;
-    //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
-    NSArray *fileList = [fileManager contentsOfDirectoryAtPath:dirPath
-                                                         error:&error];
-    [fileList enumerateObjectsUsingBlock:^(NSString *path, NSUInteger idx, BOOL * _Nonnull stop) {
-        NSString *picturePath = [dirPath stringByAppendingPathComponent:path];
-        picturePath ? [filePaths addObject:picturePath] : nil;
-    }];
-    return filePaths;
-}
-
-- (NSArray *)readDirNames:(NSString *)dirPath {
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    //在这里获取应用程序Documents文件夹里的文件及文件夹列表
-    NSError *error = nil;
-    NSArray *fileList = [[NSArray alloc] init];
-    //fileList便是包含有该文件夹下所有文件的文件名及文件夹名的数组
-    fileList = [fileManager contentsOfDirectoryAtPath:dirPath
-                                                error:&error];
-    return fileList;
-}
-
 - (id)readFile:(NSString *)filePath
-      FileType:(DDFileType)type {
+      fileType:(DDFileType)type {
     BOOL isExist;
     if (!_fileCache) {
         _fileCache = [[NSCache alloc]init];
     }
     if ([_fileCache objectForKey:filePath]) {
-        return [_fileCache objectForKey:filePath];
-    }else {
+        NSData *tempData = [_fileCache objectForKey:filePath];
+        switch (type) {
+            case DDFileTypeImage: {
+                UIImage *fileImg = [UIImage imageWithData:tempData];
+                return fileImg;
+            }
+            case DDFileTypeArray: {
+                NSArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
+                return array;
+            }
+            case DDFileTypeDictionary: {
+                NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
+                return dictionary;
+            }
+            case DDFileTypeData: {
+                return tempData;
+            }
+            default: {
+                return tempData;
+            }
+        }
+    } else {
         NSFileManager *fileManager = [NSFileManager defaultManager];
         isExist = [fileManager fileExistsAtPath:filePath];
         if (isExist) {
             NSData *tempData = [NSData dataWithContentsOfFile:filePath];
             switch (type) {
-                case Image: {
+                case DDFileTypeImage: {
                     UIImage *fileImg = [UIImage imageWithData:tempData];
                     [_fileCache setObject:fileImg forKey:filePath];
                     return fileImg;
                 }
-                case Array: {
+                case DDFileTypeArray: {
                     NSArray *array = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
                     [_fileCache setObject:array forKey:filePath];
                     return array;
                 }
-                case Dictionary: {
+                case DDFileTypeDictionary: {
                     NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:tempData];
                     [_fileCache setObject:dictionary forKey:filePath];
                     return dictionary;
                 }
-                case Data: {
+                case DDFileTypeData: {
                     [_fileCache setObject:tempData forKey:filePath];
                     return tempData;
                 }
@@ -270,20 +409,19 @@
                     return tempData;
                 }
             }
-        }else {
+        } else {
             return nil;
         }
     }
 }
 
 - (id)readFile:(NSString *)filePath
-      FileType:(DDFileType)type
-     FileField:(DDFileField)field {
+      fileType:(DDFileType)type
+     fileField:(DDFileField)field {
     NSString *finalPath = [self getAbPath:filePath
-                                FileField:field];
+                                fileField:field];
     return [self readFile:finalPath
-                 FileType:type
-                FileField:field];
+                 fileType:type];
 }
 
 - (void)flushCache {
@@ -291,23 +429,23 @@
 }
 
 - (float)countFileSize:(NSString *)filePath
-          FileSizeType:(DDSizeType)type {
+          fileSizeType:(DDSizeType)type {
     NSFileManager *manager = [NSFileManager defaultManager];
     float size = 0;
     if ([manager fileExistsAtPath:filePath]) {
         size = [[manager attributesOfItemAtPath:filePath error:nil] fileSize];
     }
     switch (type) {
-        case KB:
+        case DDSizeTypeKB:
             size = size/1024.0;
             break;
-        case MB:
+        case DDSizeTypeMB:
             size = size/(1024.0*1024.0);
             break;
-        case GB:
+        case DDSizeTypeGB:
             size = size/(1024.0*1024.0*1024.0);
             break;
-        case TB:
+        case DDSizeTypeTB:
             size = size/(1024.0*1024.0*1024.0*1024.0);
             break;
         default:
@@ -318,35 +456,35 @@
 }
 
 - (float)countFileSize:(NSString *)filePath
-                 Field:(DDFileField)field
-          FileSizeType:(DDSizeType)type {
+                 field:(DDFileField)field
+          fileSizeType:(DDSizeType)type {
     NSString *finalPath = [self getAbPath:filePath
-                                FileField:field];
+                                fileField:field];
     return [self countFileSize:finalPath
-                  FileSizeType:type];
+                  fileSizeType:type];
 }
 
 - (float)countDirSize:(NSString *)dirPath
-         FileSizeType:(DDSizeType)type {
+         fileSizeType:(DDSizeType)type {
     __block float size = 0;
     NSFileManager *manager = [NSFileManager defaultManager];
     if ([manager fileExistsAtPath:dirPath]) {
         NSArray *dirArr = [self readDirPath:dirPath];
         [dirArr enumerateObjectsUsingBlock:^(NSString *file, NSUInteger idx, BOOL * _Nonnull stop) {
             size += [self countFileSize:file
-                           FileSizeType:type];
+                           fileSizeType:type];
         }];
     }
     return size;
 }
 
 - (float)countDirSize:(NSString *)dirPath
-                Field:(DDFileField)field
-         FileSizeType:(DDSizeType)type {
+                field:(DDFileField)field
+         fileSizeType:(DDSizeType)type {
     NSString *finalPath = [self getAbPath:dirPath
-                                FileField:field];
+                                fileField:field];
     return [self countDirSize:finalPath
-                 FileSizeType:type];
+                 fileSizeType:type];
 }
 #pragma mark - Support Methods
 /**
@@ -357,19 +495,19 @@
  @return 返回绝对路径
  */
 - (NSString *)getAbPath:(NSString *)filePath
-              FileField:(DDFileField)field {
+              fileField:(DDFileField)field {
     ///选择的路径位置
     NSString *typePath;
     switch (field) {
-        case Documents: {
+        case DDFieldDocuments: {
             typePath = [self getDocPath];
         }
             break;
-        case LibraryCaches: {
+        case DDFieldLibraryCaches: {
             typePath = [self getCachePath];
         }
             break;
-        case Temp: {
+        case DDFieldTemp: {
             typePath = [self getTempPath];
         }
             break;
@@ -384,10 +522,10 @@
                DDImgType:(DDImgType)imgType {
     NSData *imgData;
     switch (imgType) {
-        case PNG:
+        case DDImgTypePNG:
             imgData = [self transformPNG:image];
             break;
-        case JPEG:
+        case DDImgTypeJPEG:
             imgData = [self transformJEPG:image];
             break;
         default:
@@ -404,7 +542,7 @@
  @return 返回剪切后的图片
  */
 - (UIImage *)imageByScalingProportionallyToSize:(CGSize)targetSize
-                                    SourceImage:(UIImage *)sourceImage {
+                                    sourceImage:(UIImage *)sourceImage {
     UIGraphicsBeginImageContext(targetSize);
     [sourceImage drawInRect:CGRectMake(0, 0, targetSize.width, targetSize.height)];
     UIImage* scaledImage = UIGraphicsGetImageFromCurrentImageContext();
