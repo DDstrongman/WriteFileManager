@@ -178,8 +178,10 @@
     return fileList;
 }
 
-- (BOOL)directWriteFile:(NSString *)path
-                   data:(id)data {
+- (BOOL)directWriteFile:(nonnull NSString *)path
+                   data:(nonnull id)data {
+    if (!data)
+        return NO;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = NO;
     if ([data isKindOfClass:[NSDictionary class]] || [data isKindOfClass:[NSArray class]]) {
@@ -208,7 +210,7 @@
     return res;
 }
 
-- (BOOL)directWriteFile:(NSString *)path
+- (BOOL)directWriteFile:(nonnull NSString *)path
                     img:(nonnull UIImage *)img
               imageType:(DDImgType)imgType {
     NSData *imgData = [self getImageData:img
@@ -217,8 +219,10 @@
                             data:imgData];
 }
 
-- (BOOL)writeFile:(NSString *)path
-             data:(id)data {
+- (BOOL)writeFile:(nonnull NSString *)path
+             data:(nonnull id)data {
+    if (!data)
+        return NO;
     NSFileManager *fileManager = [NSFileManager defaultManager];
     BOOL res = NO;
     NSData *myData;
@@ -251,7 +255,7 @@
     return res;
 }
 
-- (BOOL)writeFile:(NSString *)path
+- (BOOL)writeFile:(nonnull NSString *)path
               img:(nonnull UIImage *)img
         imageType:(DDImgType)imgType {
     NSData *imgData = [self getImageData:img
@@ -260,8 +264,8 @@
                       data:imgData];
 }
 
-- (BOOL)directWriteFileType:(NSString *)path
-                       data:(id)data
+- (BOOL)directWriteFileType:(nonnull NSString *)path
+                       data:(nonnull id)data
                       field:(DDFileField)field {
     NSString *finalPath = [self getAbPath:path
                                 fileField:field];
@@ -269,7 +273,7 @@
                             data:data];
 }
 
-- (BOOL)directWriteFileType:(NSString *)path
+- (BOOL)directWriteFileType:(nonnull NSString *)path
                         img:(nonnull UIImage *)img
                   imageType:(DDImgType)imgType
                       field:(DDFileField)field {
@@ -280,8 +284,8 @@
                                field:field];
 }
 
-- (BOOL)writeFileType:(NSString *)path
-                 data:(id)data
+- (BOOL)writeFileType:(nonnull NSString *)path
+                 data:(nonnull id)data
                 field:(DDFileField)field {
     NSString *finalPath = [self getAbPath:path
                                 fileField:field];
@@ -289,7 +293,7 @@
                       data:data];
 }
 
-- (BOOL)writeFileType:(NSString *)path
+- (BOOL)writeFileType:(nonnull NSString *)path
                   img:(nonnull UIImage *)img
             imageType:(DDImgType)imgType
                 field:(DDFileField)field {
@@ -300,7 +304,7 @@
                          field:field];
 }
 
-- (BOOL)createDir:(NSString *)dirName
+- (BOOL)createDir:(nonnull NSString *)dirName
             filed:(DDFileField)field {
     NSString *finalPath = [self getAbPath:dirName
                                 fileField:field];
@@ -312,7 +316,9 @@
     return res;
 }
 
-- (BOOL)removeFile:(NSString *)filePath {
+- (BOOL)removeFile:(nonnull NSString *)filePath {
+    if (!filePath)
+        return NO;
     NSFileManager *fileMgr = [NSFileManager defaultManager];
     NSError *err;
     BOOL result = NO;
@@ -331,7 +337,9 @@
     return result;
 }
 
-- (BOOL)removeDirFiles:(NSString *)dirPath {
+- (BOOL)removeDirFiles:(nonnull NSString *)dirPath {
+    if (!dirPath)
+        return NO;
     NSFileManager *fileMgr = [NSFileManager defaultManager];
     NSArray *filePaths = [self readDirPath:dirPath];
     __block BOOL result = NO;
@@ -353,8 +361,10 @@
     return result;
 }
 
-- (id)readFile:(NSString *)filePath
+- (id)readFile:(nonnull NSString *)filePath
       fileType:(DDFileType)type {
+    if (!filePath)
+        return nil;
     BOOL isExist;
     if (!_fileCache) {
         _fileCache = [[NSCache alloc]init];
@@ -413,7 +423,7 @@
     }
 }
 
-- (id)readFile:(NSString *)filePath
+- (id)readFile:(nonnull NSString *)filePath
       fileType:(DDFileType)type
      fileField:(DDFileField)field {
     NSString *finalPath = [self getAbPath:filePath
@@ -426,8 +436,10 @@
     [_fileCache removeAllObjects];
 }
 
-- (float)countFileSize:(NSString *)filePath
+- (float)countFileSize:(nullable NSString *)filePath
           fileSizeType:(DDSizeType)type {
+    if (!filePath)
+        return 0;
     NSFileManager *manager = [NSFileManager defaultManager];
     float size = 0;
     if ([manager fileExistsAtPath:filePath]) {
@@ -453,7 +465,7 @@
     return size;
 }
 
-- (float)countFileSize:(NSString *)filePath
+- (float)countFileSize:(nullable NSString *)filePath
                  field:(DDFileField)field
           fileSizeType:(DDSizeType)type {
     NSString *finalPath = [self getAbPath:filePath
@@ -462,8 +474,10 @@
                   fileSizeType:type];
 }
 
-- (float)countDirSize:(NSString *)dirPath
+- (float)countDirSize:(nullable NSString *)dirPath
          fileSizeType:(DDSizeType)type {
+    if (!dirPath)
+        return 0;
     __block float size = 0;
     NSFileManager *manager = [NSFileManager defaultManager];
     if ([manager fileExistsAtPath:dirPath]) {
@@ -476,7 +490,7 @@
     return size;
 }
 
-- (float)countDirSize:(NSString *)dirPath
+- (float)countDirSize:(nullable NSString *)dirPath
                 field:(DDFileField)field
          fileSizeType:(DDSizeType)type {
     NSString *finalPath = [self getAbPath:dirPath
